@@ -13,5 +13,19 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .red
     }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        let networkService = NetworkService(weatherRequestFactory: WeatherRequestFactory(with: .shared), config: .shared)
+        
+        Task {
+            do {
+                let weatherResponse = try await networkService.getForecast()
+            } catch {
+                print(error)
+            }
+        }
+    }
 }
 
