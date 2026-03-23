@@ -65,6 +65,7 @@ final class WeatherViewModel {
                 case .authorizationDenied:
                     return
                 case .authorizationGranted:
+                    self?.locationManager.requestLocation()
                     self?.fetchForecast()
                 case .authorizationNotDetermined:
                     self?.requestAuthorizationStatus()
@@ -74,7 +75,6 @@ final class WeatherViewModel {
     }
     
     func fetchForecast() {
-        locationManager.requestLocation()
         requestState = .loading
         Task {
             try? await getForecast()

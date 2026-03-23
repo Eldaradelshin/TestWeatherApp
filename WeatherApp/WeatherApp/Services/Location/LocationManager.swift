@@ -62,7 +62,6 @@ final class LocationManager: NSObject, CLLocationManagerDelegate, LocationManage
         let latitude = location.coordinate.latitude
         let longitude = location.coordinate.longitude
         self.currentLocationCoordinates = Coordinates(latitude: latitude, longitude: longitude)
-        print("Текущие координаты \(currentLocationCoordinates)")
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {

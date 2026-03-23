@@ -77,6 +77,68 @@ final class WeatherViewController: UIViewController {
         return label
     }()
     
+    // MARK: - Error container
+    
+    private let errorContainer: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        view.alpha = 0
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let errorIconContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor.systemRed.withAlphaComponent(0.2)
+        view.layer.cornerRadius = 48
+        return view
+    }()
+    
+    private let errorIconView: UIImageView = {
+        let imageView = UIImageView()
+        let iconConfig = UIImage.SymbolConfiguration(pointSize: 64, weight: .light)
+        imageView.image = UIImage(systemName: "exclamationmark.circle", withConfiguration: iconConfig)
+        imageView.tintColor = .systemRed.withAlphaComponent(0.8)
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let errorTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Something Went Wrong"
+        label.font = .systemFont(ofSize: 24, weight: .medium)
+        label.textColor = .white
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let errorMessageLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Unable to load weather data. Please try again later."
+        label.font = .systemFont(ofSize: 17, weight: .regular)
+        label.textColor = .white.withAlphaComponent(0.7)
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let retryButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Try Again", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .white.withAlphaComponent(0.2)
+        button.layer.cornerRadius = 24
+        button.clipsToBounds = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        return button
+    }()
+    
     // MARK: - Init
     
     init(viewModel: WeatherViewModel) {
@@ -99,6 +161,8 @@ final class WeatherViewController: UIViewController {
         setupScrollView()
         setupContent()
         setupLoadingView()
+        setupErrorView()
+        setupRetryButton()
         setViewsVisibility()
         setupBindings()
     }
@@ -154,10 +218,79 @@ final class WeatherViewController: UIViewController {
         
     }
     
-    private func setViewsVisibility(with state: WeatherViewModel.WeatherRequestState = .notRequested) {
-        /*
+    // MARK: - Error view
+    
+    @objc private func retryButtonTapped() {
+        // Animate button press
+        UIView.animate(withDuration: 0.1, animations: {
+            self.retryButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.retryButton.transform = .identity
+            }
+        }
+        viewModel.fetchForecast()
+    }
+    
+    private func setupRetryButton() {
+        retryButton.addTarget(self, action: #selector(retryButtonTapped), for: .touchUpInside)
+    }
+    
+    private func setupErrorView() {
+        view.addSubview(errorContainer)
+        errorContainer.addSubview(errorIconContainer)
+        errorIconContainer.addSubview(errorIconView)
+        errorContainer.addSubview(errorTitleLabel)
+        errorContainer.addSubview(errorMessageLabel)
         
-        */
+        errorContainer.addSubview(retryButton)
+        
+        let blurEffect = UIBlurEffect(style: .light)
+        let blurView = UIVisualEffectView(effect: blurEffect)
+        blurView.isUserInteractionEnabled = false
+        blurView.translatesAutoresizingMaskIntoConstraints = false
+        blurView.layer.cornerRadius = 24
+        blurView.clipsToBounds = true
+        
+        retryButton.insertSubview(blurView, at: 0)
+        
+        NSLayoutConstraint.activate([
+            errorContainer.topAnchor.constraint(equalTo: view.topAnchor),
+            errorContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            errorContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            errorContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            errorIconContainer.centerXAnchor.constraint(equalTo: errorContainer.centerXAnchor),
+            errorIconContainer.centerYAnchor.constraint(equalTo: errorContainer.centerYAnchor, constant: -100),
+            errorIconContainer.widthAnchor.constraint(equalToConstant: 96),
+            errorIconContainer.heightAnchor.constraint(equalToConstant: 96),
+            
+            errorIconView.centerXAnchor.constraint(equalTo: errorIconContainer.centerXAnchor),
+            errorIconView.centerYAnchor.constraint(equalTo: errorIconContainer.centerYAnchor),
+            errorIconView.widthAnchor.constraint(equalToConstant: 64),
+            errorIconView.heightAnchor.constraint(equalToConstant: 64),
+            
+            errorTitleLabel.topAnchor.constraint(equalTo: errorIconContainer.bottomAnchor, constant: 32),
+            errorTitleLabel.leadingAnchor.constraint(equalTo: errorContainer.leadingAnchor, constant: 24),
+            errorTitleLabel.trailingAnchor.constraint(equalTo: errorContainer.trailingAnchor, constant: -24),
+            
+            errorMessageLabel.topAnchor.constraint(equalTo: errorTitleLabel.bottomAnchor, constant: 12),
+            errorMessageLabel.leadingAnchor.constraint(equalTo: errorContainer.leadingAnchor, constant: 24),
+            errorMessageLabel.trailingAnchor.constraint(equalTo: errorContainer.trailingAnchor, constant: -24),
+            
+            retryButton.topAnchor.constraint(equalTo: errorMessageLabel.bottomAnchor, constant: 32),
+            retryButton.centerXAnchor.constraint(equalTo: errorContainer.centerXAnchor),
+            retryButton.widthAnchor.constraint(equalToConstant: 160),
+            retryButton.heightAnchor.constraint(equalToConstant: 48),
+            
+            blurView.topAnchor.constraint(equalTo: retryButton.topAnchor),
+            blurView.leadingAnchor.constraint(equalTo: retryButton.leadingAnchor),
+            blurView.trailingAnchor.constraint(equalTo: retryButton.trailingAnchor),
+            blurView.bottomAnchor.constraint(equalTo: retryButton.topAnchor)
+        ])
+    }
+    
+    private func setViewsVisibility(with state: WeatherViewModel.WeatherRequestState = .notRequested) {
         switch state {
         case .notRequested:
             currentWeatherView.isHidden = true
@@ -166,12 +299,14 @@ final class WeatherViewController: UIViewController {
             scrollView.alpha = 0
             hideLoader()
         case .loading:
+            hideErrorView()
             showLoader()
         case .success:
             hideLoader()
             showViews()
         case .failure:
             hideLoader()
+            showErrorView()
         }
     }
     
@@ -180,6 +315,16 @@ final class WeatherViewController: UIViewController {
         dailyForecastView.isHidden = false
         hourlyForecastView.isHidden = false
         scrollView.alpha = 1
+    }
+    
+    private func hideErrorView() {
+        errorContainer.isHidden = true
+        errorContainer.alpha = 0
+    }
+    
+    private func showErrorView() {
+        errorContainer.isHidden = false
+        errorContainer.alpha = 1
     }
     
     private func hideLoader() {
