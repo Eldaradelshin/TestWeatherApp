@@ -83,6 +83,7 @@ final class DayForecastCell: UITableViewCell {
         conditionLabel.text = data.condition
         highLabel.text = data.highTempC
         lowLabel.text = data.lowTempC
+        iconView.safeLoadImage(from: data.imageUrl)
     }
     
     override func prepareForReuse() {
@@ -90,6 +91,7 @@ final class DayForecastCell: UITableViewCell {
         conditionLabel.text = ""
         lowLabel.text = ""
         highLabel.text = ""
+        iconView.image = nil
     }
     
     private func setupViews() {

@@ -26,16 +26,12 @@ class HourForecastCell: UICollectionViewCell{
     
     private let iconView: UIImageView = {
         let iconView = UIImageView()
-        // TO DO - Image Loadin
-        iconView.image = UIImage(systemName: "sun.max.fill")
-        iconView.tintColor = .systemYellow
         iconView.contentMode = .scaleAspectFit
         return iconView
     }()
     
     private let tempLabel: UILabel = {
         let tempLabel = UILabel()
-        //tempLabel.text = "\(data.temperature)°"
         tempLabel.font = .systemFont(ofSize: 17, weight: .medium)
         tempLabel.textColor = .white
         tempLabel.textAlignment = .center
@@ -65,6 +61,7 @@ class HourForecastCell: UICollectionViewCell{
     override func prepareForReuse() {
         timeLabel.text = ""
         tempLabel.text = ""
+        iconView.image = nil
     }
     
     // MARK: - Methods
@@ -72,7 +69,7 @@ class HourForecastCell: UICollectionViewCell{
     func configure(with data: HourlyForecastData) {
         timeLabel.text = data.time
         tempLabel.text = "\(data.temperature)"
-        //iconView
+        iconView.safeLoadImage(from: data.imaageUrl)
     }
     
     private func setupViews() {

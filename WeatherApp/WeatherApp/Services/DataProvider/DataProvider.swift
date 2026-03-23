@@ -26,7 +26,10 @@ final class DataProvider: DataProviderProtocol {
         let dailyForecastDatas = daysData(from: forecastResponse)
         let hoursData = hoursData(from: forecastResponse)
         
-        return WeatherForecastData(currentWeatherData: currentWeatherData,
+        let isDay = forecastResponse.current.isDay == 1
+        
+        return WeatherForecastData(isDay: isDay,
+                                   currentWeatherData: currentWeatherData,
                                    dailyForecastData: dailyForecastDatas,
                                    hourlyForecastData: hoursData)
         

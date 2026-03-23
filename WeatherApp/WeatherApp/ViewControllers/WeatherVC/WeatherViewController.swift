@@ -50,6 +50,33 @@ final class WeatherViewController: UIViewController {
     private let hourlyForecastView: HourlyForecastView
     private let dailyForecastView: DailyForecastView
     
+    // MARK: - LoadingViews
+    
+    private let loadingContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.color = .white
+        indicator.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+        indicator.startAnimating()
+        
+        return indicator
+    }()
+    
+    private let loadingLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "Loading weather..."
+        label.font = .systemFont(ofSize: 18, weight: .regular)
+        label.textColor = .white.withAlphaComponent(0.8)
+        return label
+    }()
+    
     // MARK: - Init
     
     init(viewModel: WeatherViewModel) {
@@ -71,12 +98,14 @@ final class WeatherViewController: UIViewController {
         setupGradient()
         setupScrollView()
         setupContent()
+        setupLoadingView()
+        setViewsVisibility()
         setupBindings()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        fetchData()
+        viewModel.requestAuthorizationStatus()
     }
     
     override func viewDidLayoutSubviews() {
@@ -86,34 +115,103 @@ final class WeatherViewController: UIViewController {
     
     // MARK: - Methods
     
-    private func fetchData() {
-        Task {
-            try await viewModel.getForecast()
-        }
-    }
-    
     private func setupBindings() {
         viewModel.$weatherData
             .receive(on: RunLoop.main)
             .sink { [weak self] data in
                 guard let data = data else { return }
                 self?.currentWeatherView.updateView(with: data.currentWeatherData)
-            }
-            .store(in: &cancellables)
-        
-        viewModel.dailyForecastViewModel.$dailyForecastData
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in
+                self?.updateGradientColor(isDay: data.isDay)
                 self?.dailyForecastView.reloadTableView()
-            }
-            .store(in: &cancellables)
-        
-        viewModel.hourlyForecastViewModel.$hourlyForecastData
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in
                 self?.hourlyForecastView.reloadCollectionView()
             }
             .store(in: &cancellables)
+        viewModel.$requestState
+            .receive(on: RunLoop.main)
+            .sink { [weak self] state in
+                self?.setViewsVisibility(with: state)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func setupLoadingView() {
+        view.addSubview(loadingContainer)
+        loadingContainer.addSubview(activityIndicator)
+        loadingContainer.addSubview(loadingLabel)
+        
+        NSLayoutConstraint.activate([
+            loadingContainer.topAnchor.constraint(equalTo: view.topAnchor),
+            loadingContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            loadingContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            loadingContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            activityIndicator.centerXAnchor.constraint(equalTo: loadingContainer.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: loadingContainer.centerYAnchor, constant: -20),
+            
+            loadingLabel.topAnchor.constraint(equalTo: activityIndicator.bottomAnchor, constant: 24),
+            loadingLabel.centerXAnchor.constraint(equalTo: activityIndicator.centerXAnchor)
+        ])
+        
+    }
+    
+    private func setViewsVisibility(with state: WeatherViewModel.WeatherRequestState = .notRequested) {
+        /*
+        
+        */
+        switch state {
+        case .notRequested:
+            currentWeatherView.isHidden = true
+            dailyForecastView.isHidden = true
+            hourlyForecastView.isHidden = true
+            scrollView.alpha = 0
+            hideLoader()
+        case .loading:
+            showLoader()
+        case .success:
+            hideLoader()
+            showViews()
+        case .failure:
+            hideLoader()
+        }
+    }
+    
+    private func showViews() {
+        currentWeatherView.isHidden = false
+        dailyForecastView.isHidden = false
+        hourlyForecastView.isHidden = false
+        scrollView.alpha = 1
+    }
+    
+    private func hideLoader() {
+        self.loadingContainer.isHidden = true
+        self.activityIndicator.stopAnimating()
+    }
+    
+    private func showLoader() {
+        self.activityIndicator.startAnimating()
+        self.loadingContainer.isHidden = false
+    }
+    
+    private func updateGradientColor(isDay: Bool) {
+        let colors: [CGColor]
+        
+        if isDay {
+            colors = [
+                UIColor(red: 0.6, green: 0.8, blue: 1.0, alpha: 1.0).cgColor,
+                UIColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 1.0).cgColor
+            ]
+        } else {
+            colors = [
+                UIColor(red: 0.12, green: 0.09, blue: 0.29, alpha: 1.0).cgColor,
+                UIColor(red: 0.35, green: 0.16, blue: 0.45, alpha: 1.0).cgColor,
+                UIColor(red: 0.11, green: 0.16, blue: 0.31, alpha: 1.0).cgColor
+            ]
+        }
+        
+        gradientLayer.colors = colors
+        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
+        gradientLayer.locations = isDay ? [0.0, 1.0] : [0.0, 0.5, 1.0]
     }
     
     private func setupGradient() {

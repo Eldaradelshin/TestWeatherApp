@@ -28,11 +28,8 @@ class CurrentWeatherView: UIView {
         return label
     }()
     
-    // TODO Доделать загрузку
     private let weatherIconView: UIImageView = {
         let iconView = UIImageView()
-        iconView.image = UIImage(systemName: "sun.max.fill")
-        iconView.tintColor = .systemYellow
         iconView.contentMode = .scaleAspectFit
         return iconView
     }()
@@ -99,7 +96,7 @@ class CurrentWeatherView: UIView {
         guard let data = currentWeatherData else { return }
         
         locationLabel.text = data.location
-        //weatherIconView image loading
+        weatherIconView.safeLoadImage(from: data.imageUrl)
         temperatureLabel.text = data.temperature
         conditionLabel.text = data.condition
         highLowLabel.text = data.highLowTemp

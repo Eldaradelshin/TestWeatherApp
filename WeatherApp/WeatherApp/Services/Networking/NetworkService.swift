@@ -19,19 +19,17 @@ final class NetworkService: NetworkServiceProtocol {
     // MARK: - Properties
     
     private let weatherRequestFactory: WeatherRequestFactoryProtocol
-    private let config: Config
     
     // MARK: - Init
     
-    init(weatherRequestFactory: WeatherRequestFactoryProtocol, config: Config) {
+    init(weatherRequestFactory: WeatherRequestFactoryProtocol) {
         self.weatherRequestFactory = weatherRequestFactory
-        self.config = config
     }
     
     // MARK: - Methods
     
     func getCurrentWeather() async throws -> CurrentWeatherResponse {
-        let currentWeatherRequest = try weatherRequestFactory.currentWeatherRequest(with: .init(latitude: 55.7558, longitude: 37.6173))
+        let currentWeatherRequest = try weatherRequestFactory.currentWeatherRequest()
         let (data, response) = try await URLSession.shared.data(for: currentWeatherRequest)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -45,8 +43,7 @@ final class NetworkService: NetworkServiceProtocol {
     }
     
     func getForecast() async throws -> ForecastResponse {
-        let forecastRequest = try weatherRequestFactory.currentDayForecast(with: .init(latitude: 55.7558, longitude: 37.6173),
-                                                                           days: config.forecastDays)
+        let forecastRequest = try weatherRequestFactory.currentDayForecast()
         let (data, response) = try await URLSession.shared.data(for: forecastRequest)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -57,6 +54,5 @@ final class NetworkService: NetworkServiceProtocol {
         let forecastResponse = try decoder.decode(ForecastResponse.self, from: data)
         
         return forecastResponse
-        
     }
 }

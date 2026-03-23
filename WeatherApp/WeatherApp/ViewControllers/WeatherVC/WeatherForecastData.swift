@@ -8,6 +8,7 @@
 import Foundation
 
 struct WeatherForecastData {
+    let isDay: Bool
     let currentWeatherData: CurrentWeatherData
     let dailyForecastData: [DailyForecastData]
     let hourlyForecastData: [HourlyForecastData]

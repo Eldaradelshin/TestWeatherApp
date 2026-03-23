@@ -10,8 +10,8 @@ import Foundation
 // MARK: - Protocol
 
 protocol WeatherRequestFactoryProtocol: AnyObject {
-    func currentWeatherRequest(with coordinates: Coordinates) throws -> URLRequest
-    func currentDayForecast(with coordinates: Coordinates, days: Int) throws -> URLRequest
+    func currentWeatherRequest() throws -> URLRequest
+    func currentDayForecast() throws -> URLRequest
 }
 
 // MARK: - Enums
@@ -30,28 +30,28 @@ enum Paths: String {
 
 final class WeatherRequestFactory: WeatherRequestFactoryProtocol {
     
-    init(with config: Config) {
-        self.baseUrl = config.baseURL
-        self.apiKey = config.apiKey
-        self.forecastDays = config.forecastDays
+    init(with config: Config, locationManager: LocationManagerProtocol) {
+        self.config = config
+        self.locationManager = locationManager
     }
     
     // MARK: - Properties
-    
-    private let baseUrl: String
-    private let apiKey: String
-    private let forecastDays: Int
+
+    private let config: Config
+    private let locationManager: LocationManagerProtocol
     
     // MARK: - Methods
     
-    func currentWeatherRequest(with coordinates: Coordinates) throws -> URLRequest {
+    func currentWeatherRequest() throws -> URLRequest {
         
-        guard let baseUrl = URL(string: baseUrl) else {
+        guard let baseUrl = URL(string: config.baseURL) else {
             throw NetworkError.invalidUrl
         }
         
+        let coordinates = locationManager.currentLocation()
+        
         let queryItems: [URLQueryItem] = [
-            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "key", value: config.apiKey),
             URLQueryItem(name: "q", value: "\(coordinates.latitude),\(coordinates.longitude)")
         ]
         
@@ -62,17 +62,18 @@ final class WeatherRequestFactory: WeatherRequestFactoryProtocol {
         return URLRequest(url: fullUrl)
     }
     
-    func currentDayForecast(with coordinates: Coordinates, days: Int) throws -> URLRequest {
-     
+    func currentDayForecast() throws -> URLRequest {
         
-        guard let baseUrl = URL(string: baseUrl) else {
+        guard let baseUrl = URL(string: config.baseURL) else {
             throw NetworkError.invalidUrl
         }
         
+        let coordinates = locationManager.currentLocation()
+        
         let queryItems: [URLQueryItem] = [
-            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "key", value: config.apiKey),
             URLQueryItem(name: "q", value: "\(coordinates.latitude),\(coordinates.longitude)"),
-            URLQueryItem(name: "days", value: "\(days)")
+            URLQueryItem(name: "days", value: "\(config.forecastDays)")
         ]
         
         let fullUrl = baseUrl

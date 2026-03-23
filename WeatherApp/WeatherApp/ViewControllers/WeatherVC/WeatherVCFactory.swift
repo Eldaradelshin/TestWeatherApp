@@ -8,18 +8,20 @@
 import UIKit
 
 final class WeatherVCFactory {
+    
     static func make() -> WeatherViewController {
         let config = Config.shared
-        let requestFactory = WeatherRequestFactory(with: config)
-        let networkService = NetworkService(weatherRequestFactory: requestFactory, config: config)
-        
+        let locationManager = LocationManager()
+        let requestFactory = WeatherRequestFactory(with: config, locationManager: locationManager)
+        let networkService = NetworkService(weatherRequestFactory: requestFactory)
         let hourlyViewModel = HourlyForecastViewModel()
         let dailyViewModel = DailyForecastViewModel()
         let dataProvider = DataProvider()
         let weatherViewModel = WeatherViewModel(networkService: networkService,
                                                 hourlyForecastViewModel: hourlyViewModel,
                                                 dailyForecastViewModel: dailyViewModel,
-                                                dataProvider: dataProvider)
+                                                dataProvider: dataProvider,
+                                                locationManager: locationManager)
         
         let weatherViewController = WeatherViewController(viewModel: weatherViewModel)
         
